@@ -1,0 +1,103 @@
+SQL code------ 
+合并列值  
+--******************************************************************************************* 
+表结构，数据如下：  
+id    value  
+----- ------  
+1    aa  
+1    bb  
+2    aaa  
+2    bbb  
+2    ccc  
+  
+需要得到结果：  
+id    values  
+------ -----------  
+1      aa,bb  
+2      aaa,bbb,ccc  
+即：group by id, 求 value 的和（字符串相加）  
+  
+1. 旧的解决方法(在sql server 2000中只能用函数解决。)  
+--============================================================================= 
+create table tb(id int, value varchar(10))  
+insert into tb values(1, 'aa')  
+insert into tb values(1, 'bb')  
+insert into tb values(2, 'aaa')  
+insert into tb values(2, 'bbb')  
+insert into tb values(2, 'ccc')  
+go  
+--1. 创建处理函数  
+CREATE FUNCTION dbo.f_strUnite(@id int)  
+RETURNS varchar(8000)  
+AS  
+BEGIN  
+     DECLARE @str varchar(8000)  
+     SET @str = ''  
+     SELECT @str = @str + ',' + value FROM tb WHERE id=@id  
+     RETURN STUFF(@str, 1, 1, '')  
+END  
+GO  
+-- 调用函数  
+SELECt id, value = dbo.f_strUnite(id) FROM tb GROUP BY id  
+drop table tb  
+drop function dbo.f_strUnite  
+go 
+/*  
+id          value       
+----------- -----------  
+1          aa,bb  
+2          aaa,bbb,ccc  
+（所影响的行数为 2 行）  
+*/  
+--=================================================================================== 
+2. 新的解决方法(在sql server 2005中用OUTER APPLY等解决。)  
+create table tb(id int, value varchar(10))  
+insert into tb values(1, 'aa')  
+insert into tb values(1, 'bb')  
+insert into tb values(2, 'aaa')  
+insert into tb values(2, 'bbb')  
+insert into tb values(2, 'ccc')  
+go  
+-- 查询处理  
+SELECT * FROM(SELECT DISTINCT id FROM tb ) A OUTER APPLY (
+         SELECT value= STUFF(
+             REPLACE((  
+                 SELECT value FROM tb N  
+                 WHERE N.id = A.id  
+                 FOR XML AUTO  
+             ),' ',''), 1, 1, '')  ) AS P
+
+drop table tb  
+  
+/*  
+id          values  
+----------- -----------  
+1          aa,bb  
+2          aaa,bbb,ccc  
+  
+(2 行受影响)  
+*/  
+  
+--SQL2005中的方法2  
+create table tb(id int, value varchar(10))  
+insert into tb values(1, 'aa')  
+insert into tb values(1, 'bb')  
+insert into tb values(2, 'aaa')  
+insert into tb values(2, 'bbb')  
+insert into tb values(2, 'ccc')  
+go  
+  
+select id, [values]=stuff((select ','+[value] from tb t where id=tb.id for xml path('')), 1, 1, '')  
+from tb  
+group by id  
+  
+/*  
+id          values  
+----------- --------------------  
+1          aa,bb  
+2          aaa,bbb,ccc  
+  
+(2 row(s) affected)  
+  
+*/  
+
