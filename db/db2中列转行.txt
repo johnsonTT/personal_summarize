@@ -1,0 +1,30 @@
+通过递归调用来求(db2)
+
+drop table TEST2;
+CREATE TABLE TEST2
+(
+BLOG CHAR(30) NOT NULL WITH DEFAULT '',
+USERLIST VARCHAR(255) NOT NULL WITH DEFAULT '',
+PRIMARY KEY (BLOG)
+);
+INSERT INTO TEST2 
+VALUES
+('blogA', 'userA;userB;userD;'),   
+('blogB', 'userC;userD;'),
+('blogC', 'userA;userB;userC;');
+
+WITH TT (BLOG, USER_, USERLIST) AS 
+(
+        SELECT BLOG, '', USERLIST FROM TEST2
+        UNION ALL
+        SELECT  BLOG, 
+        SUBSTR(TT.USERLIST, 1, LOCATE(';', TT.USERLIST)-1),
+        SUBSTR(TT.USERLIST, LOCATE(';', TT.USERLIST)+1)
+        FROM TT 
+        WHERE LENGTH(TT.USERLIST) >1
+)
+
+SELECT USER_, BLOG
+FROM TT 
+WHERE USER_ > ''
+ORDER BY USER_, BLOG;
