@@ -1,0 +1,32 @@
+sqlserver:
+同一ip下不同数据库之间导表数据 
+insert into V3Design1Exe.dbo.weihu_ProgressItem    
+ select * from test.dbo.weihu_ProgressItem 
+
+
+将一个表中的某个字段通过关联赋值给另一个表的某个字段
+sqlsever:
+  update iect_ContrItem set contractSum= round(ci.qty*ci.price,2) ,editTime=GETDATE()
+  from iect_ContrItem ci inner join iect_Contract c on ci.contractID = c.ID
+  where c.contractType = 'P6'
+  and ci.contractSum != round(ci.qty* ci.price,2)
+
+oracle:
+UPDATE   A 
+SET A.COL1=(SELECT B.COL1 from B where  A.KEY=B.KEY [and 其它限制(可选)]  ) 
+
+
+
+遇到这种狂多记录更新数据这个语句要等死人呢,我一般这样做,最多几分钟搞定:
+create table tc_customer_bak
+select * from tc_customer where 1 = 2;
+
+insert into tc_customer_bak 
+select tcc.*(不含cust_dec001字段), tcf.friend_score(注意顺序)
+from tc_friend tcf, tc_customer tcc  where tcf.friend_id =tcc.friend_id;
+
+delete from tc_customer where friend_id in ( select friend_id from tc_customer_bak);
+
+insert into tc_customer select * from tc_customer_bak;
+
+drop table tc_customer_bak;
