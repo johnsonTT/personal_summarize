@@ -1,0 +1,33 @@
+create table MM
+(
+    item varchar(20),
+    name varchar(20)
+)
+
+go
+
+insert into MM(item,name)
+select '01','川妹子' union
+select '02','湘妹子'  
+
+
+declare @item varchar(20),@name varchar(20)
+declare my_ccc cursor for
+ 	 select   item,name from MM order by item
+open my_ccc
+
+fetch next from  my_ccc  into @item,@name
+while @@fetch_status=0
+begin
+print @item
+print @name
+                   fetch next from my_ccc into @item,@name 
+end
+close my_ccc
+deallocate my_ccc
+
+----------执行游标
+01
+川妹子
+02
+湘妹子
