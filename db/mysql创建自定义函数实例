@@ -1,0 +1,12 @@
+CREATE FUNCTION NameByT()
+RETURNS CHAR(50)
+RETURN (SELECT key_ FROM wf_property WHERE id=148);
+
+
+CREATE FUNCTION StatusByProcessInstanceId(processInstanceId int)
+RETURNS CHAR(255)
+RETURN (select group_concat(concat(activity.activityName,"[",ownerName,"]")) status
+        from wf_task task 
+        inner join wf_activity activity on task.activity_id = activity.id
+        where task.processInstance_id = processInstanceId
+        and completetime is null );
