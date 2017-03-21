@@ -1,0 +1,50 @@
+db2,oracle中的行转列函数
+select nation,listagg(city,',') within group (order by city)
+from
+( select 'China' nation ,'Guangzhou' city from dual  union all  
+  select 'China' nation ,'Shanghai' city from dual  union all  
+  select 'China' nation ,'Beijing' city from dual union all  
+  select 'USA' nation ,'New York' city from dual union all  
+  select 'USA' nation ,'Bostom' city from dual union all  
+  select 'Japan' nation ,'Tokyo' city from dual   )
+group by nation
+
+
+
+USA  	Bostom   
+USA  	New York 
+China	Beijing  
+China	Shanghai 
+China	Guangzhou
+Japan	Tokyo    
+
+-->
+
+China	Beijing,Guangzhou,Shanghai 
+Japan	Tokyo    
+USA  	Bostom,New York 
+
+
+---------------------------------------------------------------------
+oracle系统自带函数wm_concat(column)实现字段合并，
+如果您对oracle wm_concat(column)函数使用方面感兴趣的话，不妨一看。
+u_id       goods            num
+ 1          苹果             2
+ 2          梨子             5
+ 1          西瓜             4
+ 3          葡萄             1
+ 3          香蕉             1
+ 1          橘子             3
+
+select u_id, wmsys.wm_concat(goods) goods_sum   from shopping   group by u_id  
+-->
+ 1              苹果,西瓜,橘子
+ 2              梨子
+ 3              葡萄,香蕉
+
+select u_id, wmsys.wm_concat(goods || '(' || num || '斤)' ) goods_sum   from shopping   group by u_id  
+-->
+ 1              苹果(2斤),西瓜(4斤),橘子(3斤)
+ 2              梨子(5斤)
+ 3              葡萄(1斤),香蕉(1斤)
+
