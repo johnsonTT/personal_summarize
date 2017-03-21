@@ -1,0 +1,221 @@
+ORACLE的解析器按照从右到左的顺序处理FROM子句中的表名,因此FROM子句中写在最后的表(基础表 driving table)将被最先处理. 在FROM子句中包含多个表的情况下,你必须选择记录条数最少的表作为基础表.当ORACLE处理多个表时, 会运用排序及合并的方式连接它们.首先,扫描第一个表(FROM子句中最后的那个表)并对记录进行派序,然后扫描第二个表(FROM子句中最后第二个表),最后将所有从第二个表中检索出的记录与第一个表中合适记录进行合并. 
+例如： A表2万条记录，B表1条记录 
+           选择B作为基础表 (最好的方法) 
+           select count(*) from a ,b执行时间0.96秒 
+           选择TAB2作为基础表 (不佳的方法) 
+           select count(*) from b,a 执行时间26.09秒
+
+-----------------------------------------------------------------------------------
+
+SELECT子句中避免使用 ‘ * ‘ 
+         当你想在SELECT子句中列出所有的COLUMN时,使用动态SQL列引用 ‘*’ 是一个方便的方法.不幸的是,这是一个非常低效的方法. 实际上,ORACLE在解析的过程中, 会将’*’ 依次转换成所有的列名, 这个工作是通过查询数据字典完成的, 这意味着将耗费更多的时间.
+
+-----------------------------------------------------------------------------------
+
+<> 操作符（不等于） 
+       不等于操作符是永远不会用到索引的，因此对它的处理只会产生全表扫描。 
+推荐方案：用其它相同功能的操作运算代替，如 
+a<>0 改为 a>0 or a<0 
+a<>’’ 改为 a>’’
+
+-----------------------------------------------------------------------------------
+
+WHERE子句中的连接顺序． 
+         ORACLE采用自下而上的顺序解析WHERE子句,根据这个原理,表之间的连接必须写在其他WHERE条件之前, 那些可以过滤掉最大数量记录的条件必须写在WHERE子句的末尾. 
+例如:(低效,执行时间156.3秒) 
+        select * from emp e where sal > 50000 and job = ‘manager’   
+        and 25 < (select count(*) from emp where mgr=e.empno); 
+        (高效,执行时间10.6秒) 
+        select * from emp e where 25 < (select count(*) from emp where mgr=e.empno) 
+        and    sal > 50000 and job = ‘manager’;
+
+-----------------------------------------------------------------------------------
+
+尽量多使用COMMIT 只要有可能,在程序中尽量多使用COMMIT, 这样程序的性能得到提高,需求也会因为COMMIT所释放的资源而减少: 
+COMMIT所释放的资源: 
+                                 a. 回滚段上用于恢复数据的信息. 
+                                 b. 被程序语句获得的锁 
+                                 c. redo log buffer 中的空间 
+                                 d. ORACLE为管理上述3种资源中的内部花费
+
+-----------------------------------------------------------------------------------
+
+     减少对表的查询，在含有子查询的SQL语句中,要特别注意减少对表的查询.
+
+-----------------------------------------------------------------------------------
+       
+     尽量多使用表的别名(Alias)，当在SQL语句中连接多个表时, 请使用表的别名并把别名前缀于每个Column上.这样一来,就可以减少解析的时间并减少那些由Column歧义引起的语法错误.
+
+-----------------------------------------------------------------------------------
+
+     IN 操作符 
+    用IN写出来的SQL的优点是比较容易写及清晰易懂，这比较适合现代软件开发的风格。 
+    但是用IN的SQL性能总是比较低的，从ORACLE执行的步骤来分析用IN的SQL与不用IN的SQL有以下区别： 
+    ORACLE试图将其转换成多个表的连接，如果转换不成功则先执行IN里面的子查询，再查询外层的表记录，如果转换成功则直接采用多个表的连接方式查询。由此可见用IN的SQL至少多了一个转换的过程。一般的SQL都可以转换成功，但对于含有分组统计等方面的SQL就不能转换了。 
+    推荐方案：在业务密集的SQL当中尽量不采用IN操作符。 
+    NOT IN操作符 
+    此操作是强列推荐不使用的，因为它不能应用表的索引。 
+    推荐方案：用NOT EXISTS 或（外连接+判断为空）方案代替。
+
+原文地址：http://liudaoru.javaeye.com/blog/164374
+
+***********************************************************************************************************************************
+
+一、 关于索引的知识
+
+要写出运行效率高的sql，需要对索引的机制有一定了解，下面对索引的基本知识做一介绍。
+
+1、 索引的优点和局限
+索引可以提高查询的效率，但会降低dml操作的效率。
+所以建立索引时需要权衡。对于dml操作比较频繁的表，索引的个数不宜太多。
+
+2、 什么样的列需要建索引？
+经常用于查询、排序和分组的列（即经常在where、order或group by子句中出现的列）。
+
+3、 主键索引和复合索引
+对于一张表的主键，系统会自动为其建立索引。
+如果一张表的几列经常同时作为查询条件，可为其建立复合索引。
+
+4、 建立索引的语句
+create   index   i_staff   on   staff   (empno);
+create   index   i_agent   on   agent   (empno, start_date);
+
+5、 删除索引的语句
+drop   index   I_staff;
+drop   index   I_agent;
+
+6、 查询索引的语句
+法一：利用数据字典
+表一：all_indexes   查看一张表有哪些索引以及索引状态是否有效
+主要字段： index_name,   table_name,   status
+例如：select index_name,   status  
+from   all_indexes
+       where   table_name=’STAFF_INFO’;
+   INDEX_NAME        STATUS
+   ---------------------    -----------
+   I_STAFF          VALID  
+         表二：all_ind_columns   查看一张表在哪些字段上建了索引
+             主要字段： table_name,   index_name,   column_name,   column_position
+例如： select   index_name,   column_name,   column_position
+from   all_ind_columns
+      where   table_name=’AGENT’
+   INDEX_NAME        COLUMN_NAME     COLUMN_POSITON
+   ---------------------    -----------------------    --------------------------
+    I_AGENT          EMPNO              1
+    I_AGENT          START_DATE       2
+由此可见，agent表中有一个复合索引（empno, start_date ）
+    法二：利用toad工具
+toad用户界面比sql*plus友好，并且功能强大。你可以在toad编辑器中键入表名，按F4，便可见到这张表的表结构以及所有索引列等基本信息。
+
+7、 索引的一些特点
+1): 不同值较多的列上可建立检索，不同值少的列上则不要建。比如在雇员表的“性别”列上只有“男”与“女”两个不同值，因此就没必要建立索引。如果建立索引不但不会提高查询效率，反而会严重降低更新速度。
+2): 如果在索引列上加表达式，则索引不能正常使用
+例如：b1,c1分别是表b,c的索引列
+select   *   from   b   where   b1/30< 1000 ;
+select   *   from   c   where   to_char(c1,’YYYYMMDD HH24:MI:SS’) = ‘200203 14:01:01’;
+以上都是不正确的写法
+       3): where子句中如果使用in、or、like、!=，均会导致索引不能正常使用
+          例如：select   *   from   b   where   b1=30   or   b1=40;
+   4): 使用复合索引进行查询时必须使用前置列
+      例如表a上有一个复合索引（c1,c2,c3）,则c1为其前置列
+      如果用c1或c1+c2或c1+c2+c3为条件进行查询，则该复合索引可以发挥作用，反之，用c2或c3或c2+c3进行查询，则该索引不能起作用。
+
+
+二. 书写sql注意事项：
+
+1、 避免给sql语句中引用的索引列添加表达式：
+典型实例：
+b1,c1分别是表b,c的索引列：
+1） select   *   from   b   where   b1/30< 1000 ;
+2） select   *   from   c   where to_char(c1,’YYYYMMDD HH24:MI:SS’) = ‘200203 14:01:01’;
+替代方案：
+1) select   *   from   b where   b1 < 30000;
+2) select * from c   where c1 = to_date(‘20020301 14:01:01’, ‘YYYYMMDD HH24:MI:SS’);
+注：在lbs中有两个重要字段，pol_info中的undwrt_date和prem_info中的payment_date，这两个日期是带时分秒的，所以经常有同事用to_char 来查询某一时间段的数据。
+例如：select   count(*)   from   pol_info   where   to_char(undwrt_date,’YYYYMMDD’)=’20020416’;
+   select   count(*)   from   prem_info   where   to_char(undwrt_date,’YYYYMM’)=’200203’;
+替代方案：
+select   count(*)   from   pol_info  
+where   undwrt_date>=to_date(’20020416’,’YYYYMMDD’)   and
+          undwrt_date<to_date(’20020417’,’YYYYMMDD’);
+select   count(*)   from   prem_info  
+where   payment_date>=to_date(’20020301’,’YYYYMMDD’)   and
+      payment_date<to_date(’20020401’,’YYYYMMDD’);
+
+2、 避免在where子句中使用in、or、like、!=
+典型实例：
+a1是a表上的索引列：
+1) select   *   from   a
+where   ( a1 = ‘0’ and ...)   or   (a1 = ‘1’ and ...);
+2) select   count(*)   from   a   where   a1   in   (‘0’,’1’) ;
+替代方案：
+1） select   *   from   a   where   a1 = ‘0’   and ...
+union
+select   *   from   a   where   a1 = ‘1’   and ...
+2) select   count(*)   from   a   where   a1 = ‘0’;
+   select   count(*)   from   a   where a1 = ‘1’;
+然后做一次加法运算；或者直接用存储过程来实现；
+小结：
+对字段使用了 ‘in，or，like’ 做条件、对字段使用了不等号 ‘!=’，均会使索引失效；如果不产生大量重复值，可以考虑把子句拆开；拆开的子句中应该包含索引，或者使用union连结符代替。另一种方式是使用存储过程，它使SQL变得更加灵活和高效。
+
+3、 建立适当的索引
+曾经接过开发的一个统计sql， select …   from   tablea   where   cola=…   and   …
+运行效率非常慢，经查tablea数据量巨大，再查all_ind_columns，发现cola是tablea的一个复合索引中的一列，但不是前置列。象这种情况，就需要与开发商量，是否针对cola建一个索引。
+
+4、 like和substr
+对于‘like’和‘substr’，其效率并没有多大分别。但是，当所搜索的值不存在时，使用‘like’的速度明显大于‘substr’。
+所以：select   *   from   a   where   substr(a1,1,4) = '5378'   可以用like替代
+select   *   from   a   where   a1   like   ‘5378%’;
+
+5、 写where条件时，有索引字段的判断在前，其它字段的判断在后；如果where条件中用到复合索引，按照索引列在复合索引中出现的顺序来依次写where条件；
+
+6、使用多表连接时，在from子句中，将记录数少的表放在后面，可提高执行效率；
+
+7、避免使用not in 
+not   in 是效率极低的写法，尽量使用minus或外连接加以替代
+典型实例：
+1) select col1 from tab1 where col1 not in (select col1 from tab2);
+2) select sum(col2) from tab1 where col1 not in (select col1 from tab2);
+替代方案
+select col1 from tab1 minus   select col1 from tab2;
+select   sum(a.col2)   from   tab1 a, tab2   b 
+where a.col1=b.col2(+) and b.col1 is null;
+
+8、多表查询时，如果其中一个表的记录数量明显大于其他表，则可以先对此表进行查询后，再与其他小表进行表连接。
+典型实例：
+select   a.plan_code,   b.dno,   c,tno,   sum(a.tot_modal_prem),
+from   prem_info a,   dept_ref b,   plan_type c
+where   substr(a.deptno,1,7) = substr(b.deptno,1,7)
+and a.plan_code = c.plan_code
+group by b.dno,   c.tno,   a.plan_code;
+替代方案：
+select   b.dno,   c.tno,   a.plan_code,   a.tot_amount
+from   (select   plan_code,   deptno,   sum(tot_modal_prem)   tot_amount
+from   prem_info
+group   by   deptno,   plan_code) a
+dept_ref   b,
+plan_type   c
+   where   substr(a.deptno,1,7) = substr(b.deptno,1,7)
+   and   a.plan_code = c.plan_code
+group   by   b.dno,   c.tno,   a.plan_code;
+小结：
+由于prem_info表的记录数远远大于dept_ref表和plan_type表中的记录数， 所以首先从prem_info表中查询需要的记录，此时记录数已经被大量缩小，然后再和其他两个表连接，速度会得到很大改善！
+
+9、查询数量较大时，使用表连接代替IN，EXISTS，NOT IN，NOT EXISTS等。
+典型实例：
+a、使用IN：
+select sum(col2) from tab1 where col1 in (select col1 from tab2);
+使用EXISTS:：
+select sum(col2) from tab1 a 
+where exists ( select * from tab2 where col1=a.col1);
+b、使用NOT IN：
+select sum(col2) from tab1 where col1 not in (select col1 from tab2);
+使用NOT EXISTS：
+select sum(col2) from tab1 a 
+where not exists ( select * from tab2 where col1=a.col1);
+      替代方案：
+a、使用连接：
+select sum(a.col2) from tab1 a,tab2 b where a.col1=b.col2;
+b、使用外连接：
+select sum(a.col2) from tab1 a,tab2 b 
+where a.col1=b.col2(+) and b.col1 is null;
