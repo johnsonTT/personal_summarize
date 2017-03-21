@@ -1,0 +1,57 @@
+CREATE TABLE [dbo].[time_dimension] ( 
+   [time_id] [int] IDENTITY (1, 1) NOT NULL , 
+   [the_date] [datetime] NULL , 
+   [the_day] [nvarchar] (15) NULL , 
+   [the_month] [nvarchar] (15) NULL , 
+   [the_year] [smallint] NULL , 
+   [day_of_month] [smallint] NULL , 
+   [week_of_year] [smallint] NULL , 
+   [month_of_year] [smallint] NULL , 
+   [quarter] [nvarchar] (2) NULL ,
+   [reportDate] [nvarchar] (20) NULL , 
+   [reportMonth] [nvarchar] (20) NULL ,
+   [fiscal_period] [nvarchar] (20) NULL 
+   
+) ON [PRIMARY] 
+
+DECLARE @WeekString varchar(12), 
+@dDate SMALLDATETIME, 
+@sMonth varchar(20), 
+@iYear smallint, 
+@iDayOfMonth smallint, 
+@iWeekOfYear smallint, 
+@iMonthOfYear smallint, 
+@sQuarter varchar(2), 
+@sSQL varchar(100), 
+@adddays int 
+   
+SELECT @adddays = 1 --日期增量（可以自由设定） 
+SELECT @dDate = '01/01/2015' --开始日期 
+   
+WHILE @dDate < '12/31/2025'  --结束日期 
+BEGIN 
+   
+   SELECT @WeekString = DATENAME (dw, @dDate) 
+   SELECT @sMonth=DATENAME(mm,@dDate) 
+   SELECT @iYear= DATENAME (yy, @dDate) 
+   SELECT @iDayOfMonth=DATENAME (dd, @dDate) 
+   SELECT @iWeekOfYear= DATENAME (week, @dDate) 
+   SELECT @iMonthOfYear=DATEPART(month, @dDate) 
+   SELECT @sQuarter = 'Q' +  CAST(DATENAME (quarter, @dDate)as varchar(1)) 
+   INSERT INTO time_dimension(the_date, the_day, the_month, the_year, 
+   day_of_month, 
+   week_of_year, month_of_year, quarter) VALUES 
+   (@dDate, @WeekString, @sMonth, @iYear, @iDayOfMonth, @iWeekOfYear, 
+   @iMonthOfYear, @sQuarter) 
+   SELECT @dDate = @dDate + @adddays 
+END 
+GO 
+
+update time_dimension set reportDate = cast(month_of_year as varchar)+'月'+cast(day_of_month as varchar)+'日'
+        ,reportMonth = cast(the_year as varchar)+cast(the_month as varchar)
+
+update time_dimension set fiscal_period = cast(the_year as varchar)+'-'+cast(the_month as varchar)+'-'+right('0'+cast(day_of_month as varchar),2)
+
+select * from time_dimension  
+
+drop table time_dimension  
