@@ -1,0 +1,25 @@
+UPDATE语句在DB2、Oralce、SQL Server三种数据库中的写法不尽相同，本文将为您分别举例说明异同，供您参考，希望对您有所帮助。
+
+Oralce和DB2都支持的语法：
+
+UPDATE A 
+ SET (A1, A2, A3) = (SELECT B1, B2, B3 FROM B WHERE A.ID = B.ID)
+
+MS SQL Server不支持这样的语法，相对应的写法为：
+
+UPDATE A 
+    SET A1 = B1, A2 = B2, A3 = B3 
+    FROM A LEFT JOIN B ON A.ID = B.ID
+
+个人感觉MS SQL Server的Update语法功能更为强大。MS SQL SERVER的写法：
+
+UPDATE A 
+    SET A1 = B1, A2 = B2, A3 = B3
+    FROM A, B WHERE A.ID = B.ID
+
+在Oracle和DB2中的写法就比较麻烦了，如下：
+
+UPDATE A 
+    SET (A1, A2, A3) = (SELECT B1, B2, B3 FROM B WHERE A.ID = B.ID)
+    WHERE ID IN (SELECT B.ID FROM B WHERE A.ID = B.ID)
+
