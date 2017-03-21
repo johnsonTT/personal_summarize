@@ -1,0 +1,390 @@
+1.1.1 取前n条记录
+
+       SQL Server：      Select top n * from xtable
+
+       Oracle：          Select * from xtable where rownum <=n
+
+       DB2：             Select * from xtable fetch first n rows only
+
+1.1.2 取当前日期
+
+       SQL Server：      Select getdate()
+
+       Oracle：          Select sysdate from dual
+
+       DB2：             Select current   timestamp from sysibm.sysdummy1
+
+1.1.3 连接字符串
+
+SQL Server：    Select Hello+Toone
+
+Oracle：        Select   Hello||Toone from dual
+
+DB2：           Select   Hello||Toone from sysimb.sysdummy1
+
+1.1.4 空值转换
+
+       SQL Server：      SELECT   userid,username,isnull(email,0) FROM AUTH_USER
+
+       Oracle：          SELECT   userid,username,nvl(email,0) FROM AUTH_USER
+
+       DB2：             SELECT   userid,username,value(email,0) FROM AUTH_USER
+
+1.1.5 类型转换
+
+       SQL Server：      SELECT convert(varchar,getdate(),20)
+
+       Oracle：          SELECT   to_char(sysdate,yyyy-mm-dd hh24:mi:ss) from dual
+
+       DB2：             SELECT   varchar(current timestamp) from sysibm.sysdummy1
+
+       注1：
+
+   ■SQL   Server中转换日期格式改变Style参数：20 ；    
+
+   ■Oracle中转换日期格式改变格式化参数：yyyy-mm-dd   hh24:mi:ss   ‘yyyy’、’mm’、’dd’、’hh12’、’hh24’、’mi’、’ss’等；     
+
+   ■Db2中转换日期格式改变系统常量：current timestamp ‘current date’、’current   time’等；
+
+       注2：     
+
+   ■SQL Server数据类型改变“数据类型参数”：int、varchar等；     
+
+   ■Oracle数据类型改变函数：to_char()、to_date()、to_number()等；     
+
+   ■DB2数据类型改变函数：varchar()、int()、date()、time()等；
+
+1.1.6 取值判断
+
+SQL Server：   select   case Convert = case when g.master_type =system    then 管理员     when g.master_type =roletype then 特殊角色    else 普通用户    end from global_code g
+
+Oracle：       select   case g.master_type    when system    then 管理员    when roletype then 特殊角色   else 普通用户 end    AS caseConvert from global_code g
+
+DB2：          select   case g.master_type   when system    then 管理员   when roletype then 特殊角色 else 普通用户   end    AS caseConvert From global_code g
+
+1.1.7 位置 SQL
+
+       Server：      select charindex(E,ABCDEF) select patindex(%E%,ABCDEF)
+
+       Oracle：      select instr(ABCDEF,E) from dual
+
+       DB2：         Select locate(E,ABCDEF) from
+
+       sysibm.sysdummy1
+
+1.1.8 其他函数          SQL Server    Oracle      DB2
+
+   长度    Len()        Length()    Length()
+
+   取子串 Substring() Substr()    Substr()                  
+
+1.2      
+
+       附
+
+1.2.1 DB2V8.
+
+1常用命令
+
+■   创建数据库 在服务器上执行      db2 CREATE DB oatemp
+
+■   删除数据库 在服务器上执行      db2 DROP DB oatemp
+
+■   创建表空间 db2 CREATE USER TEMPORARY TABLESPACE USERSPACE1 MANAGED BY SYSTEM USING ( USERSPACE1)
+
+         ■   启动数据库 切换用户         su – db2inst1      启动数据库：          db2start
+
+         ■   关闭数据库 切换用户         su – db2inst1      关闭数据库          db2stop [force]
+
+         ■   创建远程管理节点      进入   DB2命令窗口      db2 CATALOG TCPIP NODE asnode REMOTE 10.1.22.176 SERVER 50000    db2 CATALOG DB oadb2 AS oadb2 AT NODE asnode
+
+■   连接数据库          db2 CONNECT   TO oadb2 USER db2inst1 USING ibmdb2
+
+         ■   关闭数据库连接      db2 terminate
+
+         ■   执行脚本            db2 -td! -vf ioa2.db2 -z info.log
+
+■   导出脚本            db2look -d oadb2 -i db2inst1 -w ibmdb2 -e -o putsql.db2 -t auth_user db2look -d oadb2 -i db2inst1 -wibmdb2 -e -o putsq.db2
+
+         ■   查看正在使用的端口 netstat -a
+
+         ■   查询系统表          select count(*) from SYSCAT.TABLES where TABSCHEMA=’DB2INST1’      select count(*)   from SYSCAT.PROCEDURES where PROCSCHEMA=’DB2INST1’
+
+         ■   常用命令 DB2 SELECT DROP TALBE ||TABNAME FROM SYSCAT.TABLES WHERE T ABSCHEMA=DB2INST1 AND TYPE=T >db2droptables.db2    DB2 SELECT DROP VIEW ||TABNAME FROM SYSCAT.TABLES WHERE T ABSCHEMA=DB2INST1 AND TYPE=V >db2dropviews.db2    DB2 –vf db2droptables.db2 –z info.log db2 SELECT username FROM auth_user FETCH FIRST 3 ROWS ONLY  
+
+         ■   启动JDBC      db2jstrt JDBC APPLET SERVER 6789     
+
+1.1       数据库移植注意事项
+
+1.1.1 取前n条记录
+
+SQL Server： Select top n * from xtable
+
+Oracle：Select * from xtable where rownum <=n
+
+DB2：Select * from xtable fetch first n rows only
+
+1.1.2 取当前日期
+
+SQL Server： Select getdate()
+
+Oracle： Select sysdate from dual
+
+DB2： Select current timestamp from sysibm.sysdummy1
+
+1.1.3 连接字符串
+
+SQL Server： Select 'Hello'+'Toone'
+
+Oracle： Select 'Hello'||'Toone' from dual
+
+DB2： Select 'Hello'||'Toone' from sysimb.sysdummy1
+
+1.1.4 空值转换
+
+SQL Server：SELECT userid,username,isnull(email,'0') FROM AUTH_USER
+
+Oracle： SELECT userid,username,nvl(email,'0') FROM AUTH_USER
+
+DB2：SELECT userid,username,value(email,'0') FROM AUTH_USER
+
+1.1.5 类型转换
+
+SQL Server： SELECT convert(varchar,getdate(),20)
+
+Oracle：SELECT to_char(sysdate,'yyyy-mm-dd hh24:mi:ss') from dual
+
+DB2： SELECT varchar(current timestamp) from sysibm.sysdummy1
+
+注1：
+
+     ■SQL Server中转换日期格式改变Style参数：20 ；
+
+     ■Oracle中转换日期格式改变格式化参数：yyyy-mm-dd hh24:mi:ss XML:namespace prefix = o ns = "urn:schemas-microsoft-com:Office:office" />
+
+         ‘yyyy’、’mm’、’dd’、’hh12’、’hh24’、’mi’、’ss’等；
+
+     ■Db2中转换日期格式改变系统常量：current timestamp
+
+         ‘current date’、’current time’等；
+
+注2：
+
+     ■SQL Server数据类型改变“数据类型参数”：int、varchar等；
+
+     ■Oracle数据类型改变函数：to_char()、to_date()、to_number()等；
+
+     ■DB2数据类型改变函数：varchar()、int()、date()、time()等；
+
+1.1.6 取值判断
+
+SQL Server：
+
+select caseConvert =
+
+      case when g.master_type ='system'    then '管理员'
+
+           when g.master_type ='roletype' then '特殊角色'
+
+           else '普通用户'
+
+      end
+
+from global_code g
+
+Oracle：
+
+select   case g.master_type
+
+           when 'system'    then '管理员'
+
+           when 'roletype' then '特殊角色'
+
+           else '普通用户'
+
+      end
+
+      AS caseConvert
+
+from global_code g
+
+DB2：
+
+    
+
+select   case g.master_type
+
+           when 'system'    then '管理员'
+
+           when 'roletype' then '特殊角色'
+
+           else '普通用户'
+
+      end
+
+      AS caseConvert
+
+From global_code g
+
+1.1.7 位置
+
+SQL Server：
+
+     select charindex('E','ABCDEF')
+
+select patindex('%E%','ABCDEF')
+
+Oracle：
+
+     select instr('ABCDEF','E') from dual
+
+DB2：
+
+     Select locate('E','ABCDEF') from sysibm.sysdummy1
+
+1.1.8 其他函数
+
+      SQL Server      Oracle     DB2
+
+长度   Len()          Length()   Length()
+
+取子串Substring()    Substr()   Substr()
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+1.2       附
+
+1.2.1 DB2V8.1常用命令
+
+■   创建数据库在服务器上执行 db2 CREATE DB oatemp
+
+■   删除数据库在服务器上执行db2 DROP DB oatemp
+
+■   创建表空间
+
+db2 "CREATE USER TEMPORARY TABLESPACE USERSPACE1 MANAGED BY SYSTEM USING (' USERSPACE1')"
+
+■   启动数据库 切换用户 su – db2inst1
+
+     启动数据库：db2start
+
+■   关闭数据库 切换用户 su – db2inst1 关闭数据库 db2stop [force]
+
+■   创建远程管理节点进入   DB2命令窗口
+
+     db2 CATALOG TCPIP NODE asnode REMOTE 10.1.22.176 SERVER 50000
+
+     db2 CATALOG DB oadb2 AS oadb2 AT NODE asnode
+
+■   连接数据库
+
+     db2 CONNECT TO oadb2 USER db2inst1 USING ibmdb2
+
+■   关闭数据库连接
+
+     db2 terminate
+
+■   执行脚本
+
+     db2 -td! -vf ioa2.db2 -z info.log
+
+■   导出脚本
+
+db2look -d oadb2 -i db2inst1 -w ibmdb2 -e -o putsql.db2 -t auth_user
+
+db2look -d oadb2 -i db2inst1 -w ibmdb2 -e -o putsq.db2
+
+■   查看正在使用的端口
+
+     netstat -a
+
+■   查询系统表
+
+     select count(*) from SYSCAT.TABLES where TABSCHEMA=’DB2INST1’     select count(*) from SYSCAT.PROCEDURES where PROCSCHEMA=’DB2INST1’
+
+ 
+
+在存储结构上：
+数据库由许多数据文件组成，在逻辑上则是有许多表空间组成。一个表空间则可以对应多个数据文件。在表空间内的数据库，根据用户不同，分为许多不同的模式，每个模式内包含有表，索引等对象。每个对象对应到一个段，段由许多个不一定连续的区组成，每个区则是由许多连续的数据块组成。
+要控制数据库的大小，可以通过数据文件和表空间的大小来控制，要控制表的大小，可以通过表空间可用区域的数量和大小，可以设置将表创建在哪个表空间如同sql中设置表存在哪个文件组来对表存在的位置的控制。要处理 I/O频繁的文件查询速变慢等问题，则通过数据块，和pcttree（类似sql server中的fill factor)处理。
+sql server中，没有表空间的概念，但是与表空间对应的概念是文件组。sql server也没有段的概念，sql server的页大概可以与oracle中的块对应。sql server也有区，它是分配磁盘空间的单元。因为，每一个区至少包含一个表或索引的内容，但它的区的大小是固定的64kb，页也是固定的8kb。而oarcle中的区的大小不是固定的，且每个块的大小，依据*作系统的不同而不同。
+
+
+
+Oracle的*作包含两大部分，第一个是数据库，第二个实例。所谓oracle实例可以看成sql server的mssqlserver服务，只要sql server的服务启动，那么所有的数据库就可以使用，而实例只要被启动，则特定的数据库就可以运用。每个数据库都有自己的实例。
+
+
+sql语句，MS SQL是T-SQL, 而Oracle是PL/SQL,而者有很大区别
+如查看表结构，oracle是desc 表名，而ms sql是sp_help 表名
+
+补充：oracle的存储结构
+
+一个表空间只能属于一个数据库 
+
+　　每个数据库最少有一个控制文件（建议3个，分别放在不同的磁盘上） 
+
+　　每个数据库最少有一个表空间（SYSTEM表空间） 
+
+　　每个数据库最少有两个联机日志组，每组最少一个联机日志文件 
+
+　　一个数据文件只能属于一个表空间 
+
+　　一个数据文件一旦被加入到一个表空间中，就不能再从这个表空间中移走，也不能再加入到其他表空间中 
+
+　　建立新的表空间需要建立新的数据文件 
+
+　　一个段segment只能属于一个表空间，但可以属于多个数据文件 
+
+　　一个区extent只能属于一个数据文件，即区间（extent）不能跨越数据文件 
+　　
+　　COMMIT后，数据不一定立即写盘（数据文件） 
+
+　　一个事务即使不被提交，也会被写入到重做日志中。 
+
+为什么要知道这么多，因为microsoft把很多的*作都打成包，*作人员只知道单击"下一步"就可以达到目的，但是浑然不知sql server是如何运转，oracle几乎什么都可以自己设置！，不过也因为这样，一个不小心，很可能就会把数据库搞坏，或拖跨系统运算速度。
+
+
+我讲一些sql语句的差别：
+1. oracle查看当前用户下有什么对象（表、视图、同义词、快照）
+SQL> select * from tab;
+查看表结构
+SQL> describe 表名 
+而sql server是sp_help
+2.如何实现某一字段自动增加1？
+大家都知道，sql server有个自动递增identity属性
+而oracle是通过序列来实现的
+建立一个最小为1,最大为999999999的一个序列号会自动循环的序列
+create sequence 序列名 
+increment by 1 
+start with 1 
+maxvalue 999999999 
+nocycle;
+当向表中插入数据时，SQL语句写法如下：
+SQL> insert into 表名 values(序列名.nextval,列1值,列2值);
+3 如何来限制查询所返回的行数？
+sql server 中用top子句，如select top 10 * from 表名
+而oracle利用rownum,rownum是oracle系统顺序分配为从查询返回的行的编号，返回的第一行分配的是1，第二行是2，依此类推，这个伪字段可以用于限制查询返回的总行数。
+只返回前10条纪录
+SQL> select * from 表名 where rownum<11;
+4.系统函数很多不同
+如得到系统当前时间, ms sql 用getdate(), 而oracle用sysdate
+
+在数据类型上：
+db2有个图形字符串是mssql所没有的。graphic(X) x从1到127
+它是一个双字节字符数据序列
+
+在日期时间上，mssql是datetime和smalldatetime，db2还提供了date和time型，而mssql需要用函数来获得。
+
+mssql的uniqueidentifier在db2中没有
+
+别的基本上差别不大 
