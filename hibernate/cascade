@@ -1,0 +1,28 @@
+格式：@ManyToMany(cascade = {CascadeType.REFRESH, CascadeType.MERGE}, fetch = FetchType.LAZY)
+
+cascade属性并不是多对多关系一定要用的，有了它只是让我们在插入或删除对像时更方便一些，
+只要在cascade的源头上插入或是删除，所有cascade的关系就会被自己动的插入或是删除。
+便是为了能正确的cascade，unsaved-value是个很重要的属性。
+Hibernate通过这个属性来判断一个对象应该save还是update，
+如果这个对象的id是unsaved-value的话，那说明这个对象不是persistence object要save（insert)；
+如果id是非unsaved-value的话，那说明这个对象是persistence object（数据库中已存在），只要update就行了。
+saveOrUpdate方法用的也是这个机制。
+
+----实际运用begin----
+场景实例
+现有一场景：一个管理员可以管理多个网吧，一个网吧可以被多个管理员管理。从中抽象出一个多对多的例子user-bar。
+主控方user：多对多里面里面会有第三张表user_bar，由主控方维护这里面的外键记录，也就是创建一个user的时候必须指定其管理的bar。
+被控方bar：没有权利更新外键记录。单独创建一个bar，不需要也不能指定其属于哪个user。
+
+CascadeType作用
+CascadeType.MERGE：级联更新。创建一个user的时候，指定其管理哪些bar，如果某一个bar不存在，会在创建user的时候一起创建。
+CascadeType.PERSIST：级联保存。创建一个user的时候，指定其管理哪些bar，如果某一个bar不存在，抛出异常。所以指定其管理哪些bar必须是事先存在的。
+CascadeType.REMOVE：级联删除。删除一个user的时候，会删除它管理的bar，最终是user_bar里面删了，bar里面也删了。如果不指定CascadeType.REMOVE，只删user_bar里面。
+CascadeType.REFRESH：级联刷新。第一次查询某一user和第二次查询同一user之间，删除了某一bar，CascadeType.REFRESH是的任何时候看到的都是最新的记录(两次查询结果不一样)。
+CascadeType.ALL：包含以上所有。
+
+如何使用
+根据具体的场景要指定不同的Type。
+user和bar之间的关系，并没有说user不存在了，网吧就不存在，所以不能用CascadeType.REMOVE。
+保存一个user的时候，指定他能够管理的网吧必须是已经存在的，所以CascadeType.MERGE和CascadeType.PERSIST中用CascadeType.MERGE。
+----实际运用end----
