@@ -1,0 +1,33 @@
+对Session的监听分生命周期的监听，和Session上Attribute变化的监听两种。
+
+SessionListener
+实现了接口 HttpSessionListener 
+实现该接口两个方法：
+sessionCreated(HttpSessionEvent e)    表示session创建的时候执行
+sessionDestroyed(HttpSessionEvent e)  表示session销毁的时候执行
+例：获取sessionid  e.getSession().getId()
+配置它的实现类
+<listener>
+    <listener-class>listener.SessionListener</listener-class>
+</listener>
+例：
+随意访问任意页面
+如果是第一次访问，都会触发session创建，后续访问不会触发session的创建
+关闭浏览器，再访问，也会触发session的创建。 但是有的浏览器，即便是关闭了，下一次打开，也会发送以前sessionid到服务器，这样服务器就不会创建新的session。
+session的销毁不易观察到，一般说来服务器会设置session存活时间为30分钟。所以需要等待才能观察到销毁
+注： 在重启tomcat测试之前， 要删除D:\tomcat\work\Catalina\localhost\_\SESSIONS.ser 这个文件。 
+这个文件是tomcat存放以前的session的，为了观察到创建session的活动，需要tomcat重启之前把以前的session都清除掉，才能观察到新创建session的活动。
+
+
+SessionAttributeListener 
+实现接口 HttpSessionAttributeListener 
+实现该接口三个方法：
+attributeAdded(HttpSessionBindingEvent e)     当在session中增加属性时触发
+attributeRemoved(HttpSessionBindingEvent e)   当在session中移除属性时触发
+attributeReplaced(HttpSessionBindingEvent e)  当替换session中的属性时触发
+例：
+<%
+    session.setAttribute("test", 1);
+    session.setAttribute("test", 2);
+    session.removeAttribute("test");
+%>
