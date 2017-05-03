@@ -1,0 +1,35 @@
+Listener 的作用是用于监听 web应用的创建和销毁，以及在其上attribute发生的变化。 
+web应用即ServletContext对象(jsp的隐式对象application) 
+
+监听Context
+实现接口ServletContextListener 
+实现两个方法：
+public void contextDestroyed(ServletContextEvent arg0)  对应当前web应用的初始化
+public void contextInitialized(ServletContextEvent arg0)  对应当前web应用的销毁
+配置监听器实现类
+<listener>
+    <listener-class>listener.ContextListener</listener-class>
+</listener>
+例如：
+在启动tomcat以及当前web应用重载的时候可以观察到
+web应用的自动重载需要如下前提：
+1. 配置： server.xml中对应的<context配置 的属性 @reloadable="true"
+2. 某个servlet 发生了变化，导致这个web应用自动重启
+
+监听ContextAttribute
+实现接口ContextAttributeListener
+实现三个方法：
+public void attributeAdded(ServletContextAttributeEvent e)    监听属性的增加
+public void attributeRemoved(ServletContextAttributeEvent e)  监听属性的移除
+public void attributeReplaced(ServletContextAttributeEvent e) 监听属性的替换
+e.getName为属性名，e.getValue为属性值
+配置监听器实现类
+<listener>
+    <listener-class>listener.ContextAttributeListener</listener-class>
+</listener>
+例如：
+<%
+    application.setAttribute("test", 1);
+    application.setAttribute("test", 2);
+    application.removeAttribute("test");
+%>
