@@ -1,0 +1,25 @@
+监听Request
+实现接口ServletRequestListener
+实现两个方法：
+requestDestroyed(ServletRequestEvent arg0) 当新创建了一个Request的时候触发，只要访问了服务端的资源，就会创建一个Request，无论是jsp,servlet还是html
+requestInitialized(ServletRequestEvent arg0) 当本次请求结束的时候触发
+ 
+实现接口ServletRequestAttributeListener 
+实现接口三个方法：
+attributeAdded(ServletRequestAttributeEvent e)        当有新增属性时触发
+attributeRemoved(ServletRequestAttributeEvent arg0)   当有移除属性时触发
+attributeReplaced(ServletRequestAttributeEvent arg0)  当有替换属性时触发
+配置xml:
+<listener>
+    <listener-class>listener.RequestListener</listener-class>
+</listener>
+
+例：
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+ 
+<%
+    request.setAttribute("test", 1);
+    request.setAttribute("test", 2);
+    request.removeAttribute("test");
+%>
