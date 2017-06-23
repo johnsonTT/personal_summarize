@@ -1,0 +1,28 @@
+MySQL的group by与Oracle有所不同，查询得字段可以不用写聚合函数，查询结果取得是每一组的第一行记录。
+利用上面的特点，可以利用mysql实现一种独特的排序；
+首先先按某个字段进行order by,然后把有顺序的表进行分组，这样每组的成员都是有顺序的，而mysql默认取得分组的第一行。从而得到每组的最值。
+
+最近工作用的表有这样一个需求，ip字段有重复，取最后时间更新的ip。
+起初我用关联查询实现的：
+SELECT t.id,t.ip
+FROM app t
+INNER JOIN
+(SELECT ip,MAX(updatetime) m_updatetime
+FROM app
+GROUP BY 
+ip) t1
+ON t1.ip=t.ip AND t.updatetime=t1.m_updatetime
+但是这种方式，效率太低，查询太慢了。
+
+
+现在可以利用mysql的group by特性实现
+SELECT
+  t.id,
+  t.ip
+FROM (SELECT *
+      FROM app
+      ORDER BY updateTime DESC) t
+GROUP BY t.ip
+先对更新时间降序排列，再取每组的第一条记录。
+
+ps:mysql 从5.7版本开始默认不支持这种做法了（only_full_group_by），要取不在group by中的字段要用any_value函数修饰
