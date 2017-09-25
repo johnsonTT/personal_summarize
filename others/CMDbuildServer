@@ -1,0 +1,7 @@
+redis
+安装：redis-server.exe --service-install redis.windows.conf --loglevel verbose
+卸载：redis-server --service-uninstall
+
+mysql
+安装：mysqld --install
+卸载：mysqld --remove
